@@ -62,6 +62,7 @@ type config struct {
 	LogDir          string                  `long:"logdir" description:"Directory to log output."`
 	Profile         string                  `long:"profile" description:"Enable HTTP profiling on given port -- NOTE port must be between 1024 and 65536"`
 	DBTimeout       time.Duration           `long:"dbtimeout" description:"The timeout value to use when opening the wallet database."`
+	OrcaNet 		bool 					`long:"orcanet" description:"Use the Orca test network (default mainnet)"`
 
 	// Wallet options
 	WalletPass string `long:"walletpass" default-mask:"-" description:"The public wallet password -- Only required if the wallet was created with one"`
@@ -368,6 +369,10 @@ func loadConfig() (*config, []string, error) {
 	}
 	if cfg.SimNet {
 		activeNet = &netparams.SimNetParams
+		numNets++
+	}
+	if cfg.OrcaNet {
+		activeNet = &netparams.OrcaNetParams
 		numNets++
 	}
 	if cfg.SigNet {

@@ -30,6 +30,8 @@ require (
 	google.golang.org/grpc v1.53.0
 )
 
+replace github.com/btcsuite/btcd => /Users/aceroliang/classes/OrcaNet/orcanet
+
 require (
 	github.com/aead/siphash v1.0.1 // indirect
 	github.com/btcsuite/go-socks v0.0.0-20170105172521-4720035b7bfd // indirect
