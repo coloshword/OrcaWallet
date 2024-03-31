@@ -25,10 +25,10 @@ var MainNetParams = Params{
 	RPCServerPort: "8332",
 }
 
-var OrcaNetParams = Params {
-	Params: &chaincfg.OrcaNetParams,
-	RPCClientPort: "8334",
-	RPCServerPort: "8332",
+var FreshNetParams = Params {
+	Params: &chaincfg.FreshNetParams,
+	RPCClientPort: "41599",
+	RPCServerPort: "41601",
 }
 
 // TestNet3Params contains parameters specific running btcwallet and

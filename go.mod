@@ -30,7 +30,8 @@ require (
 	google.golang.org/grpc v1.53.0
 )
 
-replace github.com/btcsuite/btcd => /Users/aceroliang/classes/OrcaNet/orcanet
+// TODO: open terminal, use 'pwd' to find absolute path to btcd
+replace github.com/btcsuite/btcd => /Users/draku/go/src/orcacointest
 
 require (
 	github.com/aead/siphash v1.0.1 // indirect
