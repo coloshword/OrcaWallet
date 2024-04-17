@@ -30,7 +30,11 @@ require (
 	google.golang.org/grpc v1.53.0
 )
 
-replace github.com/btcsuite/btcd => /Users/aceroliang/classes/OrcaNet/orcanet
+// CHANGE: change the location of btcd to the path of your local btcd
+replace github.com/btcsuite/btcd => /Users/draku/go/src/orcacointest
+
+// CHANGE: change this to the location where your btcutil is located
+replace github.com/btcsuite/btcd/btcutil => /Users/draku/go/src/orcacointest/btcutil
 
 require (
 	github.com/aead/siphash v1.0.1 // indirect
