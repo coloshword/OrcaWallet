@@ -27,8 +27,8 @@ var MainNetParams = Params{
 
 var FreshNetParams = Params {
 	Params: &chaincfg.FreshNetParams,
-	RPCClientPort: "41599",
-	RPCServerPort: "41601",
+	RPCClientPort: "41601",
+	RPCServerPort: "41602",
 }
 
 // TestNet3Params contains parameters specific running btcwallet and

@@ -2527,10 +2527,8 @@ func (s *ScopedKeyManager) cloneKeyWithVersion(key *hdkeychain.ExtendedKey) (
 		case KeyScopeBIP0084:
 			version = HDVersionMainNetBIP0084
 		default:
-			return nil, fmt.Errorf("unsupported scope %v for OrcaNet", s.scope)
-		}
-	
-			
+			return nil, fmt.Errorf("unsupported scope %v for FreshNet", s.scope)
+		}	
 
 	case wire.TestNet, wire.TestNet3,
 		netparams.SigNetWire(s.rootManager.ChainParams()):

@@ -34,12 +34,13 @@ const (
 	defaultLogFilename      = "btcwallet.log"
 	defaultRPCMaxClients    = 10
 	defaultRPCMaxWebsockets = 25
+	sampleConfigFilename    = "sample-btcwallet.conf"
 )
 
 var (
 	btcdDefaultCAFile  = filepath.Join(btcutil.AppDataDir("btcd", false), "rpc.cert")
 	defaultAppDataDir  = btcutil.AppDataDir("btcwallet", false)
-	defaultConfigFile  = filepath.Join(defaultAppDataDir, defaultConfigFilename)
+	defaultConfigFile  = filepath.Join(btcutil.BtcWalletDir(), sampleConfigFilename)
 	defaultRPCKeyFile  = filepath.Join(defaultAppDataDir, "rpc.key")
 	defaultRPCCertFile = filepath.Join(defaultAppDataDir, "rpc.cert")
 	defaultLogDir      = filepath.Join(defaultAppDataDir, defaultLogDirname)
@@ -52,7 +53,7 @@ type config struct {
 	Create          bool                    `long:"create" description:"Create the wallet if it does not exist"`
 	CreateTemp      bool                    `long:"createtemp" description:"Create a temporary simulation wallet (pass=password) in the data directory indicated; must call with --datadir"`
 	AppDataDir      *cfgutil.ExplicitString `short:"A" long:"appdata" description:"Application data directory for wallet config, databases and logs"`
-	FreshNet 		bool 					`long:"freshnet" description:"Use the Fresh network"`
+	FreshNet        bool                    `long:"freshnet" description:"Use the Fresh network"`
 	TestNet3        bool                    `long:"testnet" description:"Use the test Bitcoin network (version 3) (default mainnet)"`
 	SimNet          bool                    `long:"simnet" description:"Use the simulation test network (default mainnet)"`
 	SigNet          bool                    `long:"signet" description:"Use the signet test network (default mainnet)"`
@@ -250,10 +251,10 @@ func parseAndSetDebugLevels(debugLevel string) error {
 // line options.
 //
 // The configuration proceeds as follows:
-//      1) Start with a default config with sane settings
-//      2) Pre-parse the command line to check for an alternative config file
-//      3) Load configuration file overwriting defaults with any specified options
-//      4) Parse CLI options and overwrite/add any specified options
+//  1. Start with a default config with sane settings
+//  2. Pre-parse the command line to check for an alternative config file
+//  3. Load configuration file overwriting defaults with any specified options
+//  4. Parse CLI options and overwrite/add any specified options
 //
 // The above results in btcwallet functioning properly without any config
 // settings while still allowing the user to override settings with config files
