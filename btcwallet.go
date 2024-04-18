@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sync"
+	"fmt"
 
 	"github.com/btcsuite/btcwallet/chain"
 	"github.com/btcsuite/btcwallet/rpc/legacyrpc"
@@ -55,6 +56,7 @@ func walletMain() error {
 
 	// Show version at startup.
 	log.Infof("Version %s", version())
+	fmt.Println("this is the called part");
 
 	if cfg.Profile != "" {
 		go func() {
