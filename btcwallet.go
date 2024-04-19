@@ -13,9 +13,12 @@ import (
 	"runtime"
 	"sync"
 	"fmt"
+	"strings"
+	"bufio"	
 
 	"github.com/btcsuite/btcwallet/chain"
 	"github.com/btcsuite/btcwallet/rpc/legacyrpc"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcwallet/wallet"
 	"github.com/btcsuite/btcwallet/walletdb"
 	"github.com/lightninglabs/neutrino"
@@ -33,6 +36,118 @@ func main() {
 	if err := walletMain(); err != nil {
 		os.Exit(1)
 	}
+}
+
+// retrieves user's filepath for btcd.conf
+func getBtcdConfFilePath() (string) {
+	const defaultConfigFilename = "btcd.conf"
+	var defaultHomeDir = btcutil.AppDataDir("btcd", false)
+	var defaultConfigFile = filepath.Join(defaultHomeDir, defaultConfigFilename)
+	return defaultConfigFile
+}
+
+// returns an array [rpcuser, rpcpass]
+func readRPCInfo(path string) ([]string, error) {
+	body, err := os.ReadFile(path)
+
+	if err != nil {
+		return nil, fmt.Errorf("error reading the btcd.conf file")
+	}
+
+	content := string(body)
+	var rpcInfo []string 
+	// find the line with "rpcuser" and "rpcpass"
+	lines := strings.Split(content, "\n");
+	for _, line := range lines {
+		if strings.HasPrefix(line, "rpcuser") || strings.HasPrefix(line, "rpcpass") {
+			parts := strings.Split(line, "=")
+			// if len(parts) == 2 {
+			// 	fmt.Println(parts)
+			// 	rpcInfo = append(rpcInfo, strings.TrimSpace(parts[1]))
+			// }
+			rpcInfo = append(rpcInfo, strings.TrimSpace(parts[1]))
+		}
+	}
+
+	if len(rpcInfo) < 2 {
+		return nil, fmt.Errorf("error finding rpcuser and rpc pass")
+	}
+	return rpcInfo, nil 
+}
+
+/** creates the btcwallet config file by copying the location of the btcd.conf file */
+func createConfigFile() {
+	const defaultConfigFilename = "btcwallet.conf"
+	var defaultHomeDir = btcutil.AppDataDir("btcwallet", false)
+	const sampleConfigFileName = "sample-btcwallet.conf"
+	var defaultConfigFile = filepath.Join(defaultHomeDir, defaultConfigFilename) // the location where btcwallet.conf belongs 
+	path, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		fmt.Println(err)
+		return 
+	}
+	// get the path of the btcd.conf file 
+	btcdConfFilePath := getBtcdConfFilePath()
+	fmt.Println(btcdConfFilePath)
+	// now that we have the file, we should get rpcuser and rpc pass from the file
+	rpcInfo, err := readRPCInfo(btcdConfFilePath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	// rpcInfo[0] is the rpcUser and rpcInfo[1] is the rpcPass
+	fmt.Println(rpcInfo)
+	fmt.Println(defaultConfigFile)
+	// find the sample file 
+	// assume that the path is in the same spot as the btcwallet binary
+	sampleConfigPath := filepath.Join(path, sampleConfigFileName)
+	fmt.Println("sample config file " + sampleConfigPath)
+
+	src, err := os.Open(sampleConfigPath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer src.Close()
+
+	dest, err := os.Create(defaultConfigFile)
+	if err != nil {
+		fmt.Println(err)
+		return 
+	}
+	defer dest.Close()
+
+	// create readers to copy
+	scanner := bufio.NewScanner(src)
+	writer := bufio.NewWriter(dest)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if strings.Contains(line, "username=") && !strings.Contains(line, "btcd") {
+			line = "username=" + rpcInfo[0] + "="
+		} else if strings.Contains(line, "password=")  && !strings.Contains(line, "btcd"){
+			line = "password=" + rpcInfo[1] + "="
+		}
+		_, err := writer.WriteString(line + "\n")
+		if err != nil {
+			fmt.Println("Failed to write ")
+			return 
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Reading error:", err)
+		return 
+	}
+
+	if err := writer.Flush(); err != nil {
+		fmt.Println("failed to flush to dest file ")
+		return 
+	}
+
+	fmt.Println("config file successfully created")
+	
 }
 
 // walletMain is a work-around main function that is required since deferred
@@ -57,7 +172,9 @@ func walletMain() error {
 	// Show version at startup.
 	log.Infof("Version %s", version())
 	fmt.Println("this is the called part");
-
+	// this is called at startup (after wallet creation)
+	// we should automatically create the btcwallet.conf file by copying the btcd.conf file 
+	createConfigFile()
 	if cfg.Profile != "" {
 		go func() {
 			listenAddr := net.JoinHostPort("", cfg.Profile)
