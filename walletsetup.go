@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"strings"
 
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -37,6 +38,91 @@ func networkDir(dataDir string, chainParams *chaincfg.Params) string {
 	}
 
 	return filepath.Join(dataDir, netname)
+}
+
+
+// retrieves user's filepath for btcd.conf
+func getBtcdConfFilePath() (string) {
+	const defaultConfigFilename = "btcd.conf"
+	var defaultHomeDir = btcutil.AppDataDir("btcd", false)
+	var defaultConfigFile = filepath.Join(defaultHomeDir, defaultConfigFilename)
+	return defaultConfigFile
+}
+
+
+/** creates the btcwallet config file by copying the location of the btcd.conf file */
+func createConfigFile() {
+	const defaultConfigFilename = "btcwallet.conf"
+	var defaultHomeDir = btcutil.AppDataDir("btcwallet", false)
+	const sampleConfigFileName = "sample-btcwallet.conf"
+	var defaultConfigFile = filepath.Join(defaultHomeDir, defaultConfigFilename) // the location where btcwallet.conf belongs 
+	path, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		fmt.Println(err)
+		return 
+	}
+	// get the path of the btcd.conf file 
+	btcdConfFilePath := getBtcdConfFilePath()
+	fmt.Println(btcdConfFilePath)
+	// now that we have the file, we should get rpcuser and rpc pass from the file
+	rpcInfo, err := readRPCInfo(btcdConfFilePath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	// rpcInfo[0] is the rpcUser and rpcInfo[1] is the rpcPass
+	fmt.Println(rpcInfo)
+	fmt.Println(defaultConfigFile)
+	// find the sample file 
+	// assume that the path is in the same spot as the btcwallet binary
+	sampleConfigPath := filepath.Join(path, sampleConfigFileName)
+	fmt.Println("sample config file " + sampleConfigPath)
+
+	src, err := os.Open(sampleConfigPath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer src.Close()
+
+	dest, err := os.Create(defaultConfigFile)
+	if err != nil {
+		fmt.Println(err)
+		return 
+	}
+	defer dest.Close()
+
+	// create readers to copy
+	scanner := bufio.NewScanner(src)
+	writer := bufio.NewWriter(dest)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if strings.Contains(line, "username=") && !strings.Contains(line, "btcd") {
+			line = "username=" + rpcInfo[0] + "="
+		} else if strings.Contains(line, "password=")  && !strings.Contains(line, "btcd"){
+			line = "password=" + rpcInfo[1] + "="
+		}
+		_, err := writer.WriteString(line + "\n")
+		if err != nil {
+			fmt.Println("Failed to write ")
+			return 
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Reading error:", err)
+		return 
+	}
+
+	if err := writer.Flush(); err != nil {
+		fmt.Println("failed to flush to dest file ")
+		return 
+	}
+
+	fmt.Println("config file successfully created")
+	
 }
 
 // convertLegacyKeystore converts all of the addresses in the passed legacy
@@ -195,6 +281,7 @@ func createWallet(cfg *config) error {
 
 	w.Manager.Close()
 	fmt.Println("The wallet has been created successfully.")
+	createConfigFile()
 	return nil
 }
 
@@ -225,7 +312,6 @@ func createSimulationWallet(cfg *config) error {
 	if err != nil {
 		return err
 	}
-
 	fmt.Println("The wallet has been created successfully.")
 	return nil
 }
